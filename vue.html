@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <title>jQuery example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" src="./jquery.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div id="app">
+            <div>
+                <h1>Hello !</h1>
+                <hr />
+                <button class="btn btn-primary" @click="fetchUsers" :disabled="usersToDisplay.length">Fetch
+                    users</button>
+                <button class="btn btn-danger" @click="clearUsers" :disabled="!usersToDisplay.length">Cancel
+                    users</button>
+                <p>Nombre d'utilisateurs : <span>{{usersToDisplay.length}}</span></p>
+
+                <div class="form-group">
+                    <label>
+                        filtres: {{selectedGender}}
+                        <select class="form-control" v-model="selectedGender">
+                            <option value="">Tous</option>
+                            <option value="male">Hommes</option>
+                            <option value="female">Femmes</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        age: {{selectedAgeSort}}
+                        <select class="form-control" v-model="selectedAgeSort">
+                            <option value="">Rien</option>
+                            <option value="asc">Ascendant</option>
+                            <option value="desc">Descendant</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        Name: {{selectedName}}
+                        <input class="form-control" v-model="selectedName">
+                    </label>
+                </div>
+
+
+
+
+                <button class="btn btn-primary sort-btn youngest" @click="youngestUsers"> Sort By Youngest Users
+                </button>
+                <button class="btn btn-primary sort-btn oldest" @click="oldestUsers"> Sort By Oldest Users </button>
+                <button class="btn btn-primary" @click="cancelEverything"> Cancel Everything </button>
+
+
+            </div>
+
+            <div v-if="usersToDisplay.length === 0">
+                <h2>
+                    <center>Aucun utilisateurs</center>
+                </h2>
+            </div>
+
+            <table v-else id="tbl-users" class="table table-hover">
+                <thead>
+
+                    <tr>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Âge</th>
+                        <th>Tel</th>
+                        <th>Civilité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="user in usersToDisplay">
+                        <td> <img :src="user.picture.thumbnail"></td>
+                        <td>{{user.name.first}} {{user.name.last}}</td>
+                        <td>{{user.email}}</td>
+                        <td>{{user.dob.age}}</td>
+                        <td>{{user.phone}}</td>
+                        <td>{{user.gender === 'male' ? '🤷‍♂️' : '🤷‍♀️'}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.15/dist/vue.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.js"></script>
+
+    <script>
+        const { createApp, ref, computed } = Vue
+
+        createApp({
+            setup() {
+                const users = ref([])
+                const selectedGender = ref('')
+                const selectedAgeSort = ref('')
+                const selectedName = ref('')
+
+                const filterByGender = (userList) => {
+                    if (!selectedGender.value) {
+                        return userList
+                    }
+                    return userList.filter(user => user.gender === selectedGender.value)
+                }
+
+                const sortByAge = (userList) => {
+                    if (!selectedAgeSort.value) {
+                        return userList
+                    }
+                    return userList.sort((user1, user2) => selectedAgeSort.value === 'desc' ? user2.dob.age - user1.dob.age : user1.dob.age - user2.dob.age)
+                }
+
+                const filterByName = (userList) => {
+                    if (!selectedName.value) {
+                        return userList
+                    }
+                    return userList.filter(user => user.name.first.toLowerCase().includes(selectedName.value) || user.name.last.toLowerCase().includes(selectedName.value))
+                }
+
+
+                const usersToDisplay = computed(() => filterByName(sortByAge(filterByGender(users.value))))
+
+
+
+
+                const fetchUsers = () => {
+                    axios('https://randomuser.me/api/?results=20').then(({ data: { results } }) => {
+                        users.value = results;
+                    });
+                };
+
+                const clearUsers = () => {
+                    users.value = [];
+                };
+
+                const youngestUsers = () => {
+                    users.value.sort((a, b) => (a.dob.age - b.dob.age));
+                }
+
+                const oldestUsers = () => {
+                    users.value.sort((a, b) => (b.dob.age > a.dob.age ? 1 : -1));
+                }
+
+                return {
+                    users,
+                    selectedGender,
+                    selectedAgeSort,
+                    selectedName,
+                    fetchUsers,
+                    clearUsers,
+                    youngestUsers,
+                    oldestUsers,
+                    usersToDisplay
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+
+</html>

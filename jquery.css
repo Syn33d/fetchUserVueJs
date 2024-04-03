@@ -1,0 +1,5 @@
+.sort-btn.active,
+.filter-btn.active {
+  background-color: #a72828;
+  color: #a72828;
+}
